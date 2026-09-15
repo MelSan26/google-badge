@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Badge de reseñas de Google</title>
+<style>
+  body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: Arial, Helvetica, sans-serif;
+    background: transparent;
+  }
+
+  .badge {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #4285F4 0deg 90deg,
+      #EA4335 90deg 180deg,
+      #FBBC05 180deg 270deg,
+      #34A853 270deg 360deg
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+
+  .badge-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  .rating-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #202124;
+    line-height: 1;
+  }
+
+  .stars {
+    margin: 4px 0;
+    font-size: 18px;
+    letter-spacing: 2px;
+    color: #FBBC05;
+  }
+
+  .google-word {
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .google-word span:nth-child(1) { color: #4285F4; }
+  .google-word span:nth-child(2) { color: #EA4335; }
+  .google-word span:nth-child(3) { color: #FBBC05; }
+  .google-word span:nth-child(4) { color: #4285F4; }
+  .google-word span:nth-child(5) { color: #34A853; }
+  .google-word span:nth-child(6) { color: #EA4335; }
+</style>
+</head>
+<body>
+
+<div class="badge">
+  <div class="badge-inner">
+    <div class="rating-number" id="rating">–</div>
+    <div class="stars" id="stars">☆☆☆☆☆</div>
+    <div class="google-word">
+      <span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ======= CONFIGURA ESTOS DOS VALORES =======
+  const API_KEY = "AIzaSyD2rDixXPGoLC8fEcFCKyd3KzS7L2THtD0";
+  const PLACE_ID = "ChIJNbZjGVLfDQ0Rj3SfMCqMkEc"; // C. Crucero, 44, Sanlúcar de Barrameda, Cádiz
+  // ============================================
+
+  async function loadRating() {
+    try {
+      const res = await fetch(`https://places.googleapis.com/v1/places/${PLACE_ID}`, {
+        headers: {
+          "X-Goog-Api-Key": API_KEY,
+          "X-Goog-FieldMask": "rating,userRatingCount"
+        }
+      });
+      const data = await res.json();
+
+      if (data.rating) {
+        document.getElementById("rating").textContent = data.rating.toFixed(1);
+        document.getElementById("stars").textContent = buildStars(data.rating);
+      } else {
+        document.getElementById("rating").textContent = "N/D";
+      }
+    } catch (err) {
+      document.getElementById("rating").textContent = "Error";
+      console.error("Error cargando la valoración:", err);
+    }
+  }
+
+  function buildStars(rating) {
+    const full = Math.round(rating);
+    let out = "";
+    for (let i = 0; i < 5; i++) {
+      out += i < full ? "★" : "☆";
+    }
+    return out;
+  }
+
+  loadRating();
+</script>
+
+</body>
+</html>
