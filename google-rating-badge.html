@@ -86,7 +86,51 @@
   const PLACE_ID = "ChIJNbZjGVLfDQ0Rj3SfMCqMkEc"; // C. Crucero, 44, Sanlúcar de Barrameda, Cádiz
   // ============================================
 
+  const CACHE_KEY = "google_rating_cache";
+  const CACHE_HOURS = 24;
+
+  function getCachedRating() {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+
+      const cached = JSON.parse(raw);
+      const ageHours = (Date.now() - cached.timestamp) / (1000 * 60 * 60);
+
+      if (ageHours < CACHE_HOURS) {
+        return cached;
+      }
+      return null; // caducado
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function setCachedRating(rating) {
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        rating: rating,
+        timestamp: Date.now()
+      }));
+    } catch (err) {
+      console.warn("No se pudo guardar la caché:", err);
+    }
+  }
+
+  function renderRating(rating) {
+    document.getElementById("rating").textContent = rating.toFixed(1);
+    document.getElementById("stars").textContent = buildStars(rating);
+  }
+
   async function loadRating() {
+    // 1) Intentar usar la caché si es de hoy
+    const cached = getCachedRating();
+    if (cached) {
+      renderRating(cached.rating);
+      return; // no se hace ninguna llamada a la API
+    }
+
+    // 2) Si no hay caché válida, pedir el dato real a Google
     try {
       const res = await fetch(`https://places.googleapis.com/v1/places/${PLACE_ID}`, {
         headers: {
@@ -97,8 +141,8 @@
       const data = await res.json();
 
       if (data.rating) {
-        document.getElementById("rating").textContent = data.rating.toFixed(1);
-        document.getElementById("stars").textContent = buildStars(data.rating);
+        renderRating(data.rating);
+        setCachedRating(data.rating);
       } else {
         document.getElementById("rating").textContent = "N/D";
       }
